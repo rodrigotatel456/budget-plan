@@ -187,52 +187,44 @@ function addMessageToChat(sender, message) {
 // Biometric Registration Function
 async function registerBiometric() {
   const publicKeyOptions = {
-    challenge: window.crypto.getRandomValues(new Uint8Array(32)),
-    rp: { name: "Budget Planner" },
+    challenge: Uint8Array.from(
+      window.crypto.getRandomValues(new Uint8Array(32))
+    ), // Generate a random challenge
+    rp: { name: "Budget Planner", id: window.location.hostname }, // Ensure correct relying party ID
     user: {
-      id: Uint8Array.from("uniqueUserId", (c) => c.charCodeAt(0)), // Replace with a unique ID from your server
-      name: "user@example.com", // Replace with the user's email/username
+      id: new Uint8Array(16), // A unique user ID (can come from Firebase)
+      name: "user@example.com", // Replace with the actual user email/username
       displayName: "User",
     },
-    pubKeyCredParams: [
-      { type: "public-key", alg: -7 }, // ES256
-      { type: "public-key", alg: -257 }, // RS256
-    ],
+    pubKeyCredParams: [{ type: "public-key", alg: -7 }], // Use ES256 algorithm
     authenticatorSelection: {
-      authenticatorAttachment: "platform", // Use built-in authenticator (biometric)
+      authenticatorAttachment: "platform", // Use built-in biometric sensor
       userVerification: "required",
     },
     timeout: 60000,
-    attestation: "direct",
+    attestation: "none", // Change to "direct" if attestation is needed
   };
 
   try {
     const credential = await navigator.credentials.create({
       publicKey: publicKeyOptions,
     });
-    console.log("Biometric registration successful:", credential);
 
-    // TODO: Send credential.response and other details to your server for verification and storage.
+    console.log("Biometric registration successful:", credential);
     alert("Biometric registration successful!");
+
+    // TODO: Send `credential` to your backend for verification and storage
   } catch (err) {
     console.error("Biometric registration failed:", err);
-    alert("Biometric registration failed. Check console for details.");
+    alert("Biometric registration failed. See console for details.");
   }
 }
 
 // Biometric Login Function
 async function loginBiometric() {
-  // For production, fetch allowed credentials from your server.
-  // Here is a dummy allowedCredentials sample; replace with actual data.
-  const dummyCredentialId = new Uint8Array([1, 2, 3, 4]).buffer; // Dummy value
   const publicKeyRequestOptions = {
-    challenge: window.crypto.getRandomValues(new Uint8Array(32)),
-    allowCredentials: [
-      {
-        id: dummyCredentialId,
-        type: "public-key",
-      },
-    ],
+    challenge: Uint8Array.from(window.crypto.getRandomValues(new Uint8Array(32))), // Generate a challenge
+    allowCredentials: [], // Let the browser choose the stored credential
     timeout: 60000,
     userVerification: "required",
   };
@@ -241,11 +233,13 @@ async function loginBiometric() {
     const assertion = await navigator.credentials.get({
       publicKey: publicKeyRequestOptions,
     });
+
     console.log("Biometric login successful:", assertion);
-    // TODO: Send assertion.response to your server for verification.
     alert("Biometric login successful!");
+
+    // TODO: Send `assertion.response` to your backend for verification
   } catch (err) {
     console.error("Biometric login failed:", err);
-    alert("Biometric login failed. Check console for details.");
+    alert("Biometric login failed. See console for details.");
   }
 }
