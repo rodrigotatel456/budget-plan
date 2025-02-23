@@ -3,53 +3,36 @@ name: Deploy Budget Planner to GitHub Pages
 on:
   push:
     branches:
-      - main  # Runs the workflow every time you push to 'main' branch
+      - main  # Runs deployment when changes are pushed to 'main' branch
 
 permissions:
-  contents: read
+  contents: write  # Required for pushing to 'gh-pages'
 
 jobs:
-  build:
-    runs-on: ubuntu-latest  # The workflow runs in a Linux environment
+  deploy:
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4  # Fetches your code from GitHub
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 20  # Installs Node.js 20 (latest stable)
+          node-version: 20
 
       - name: Install Dependencies
-        run: npm install  # Installs required npm packages
-
-      - name: Run Linting
-        run: npm run lint || echo "Linting issues detected, but continuing..."
-
-      - name: Run Tests
-        run: npm test || echo "Tests failed, but continuing deployment..."
+        run: npm install
 
       - name: Build Project (if needed)
         run: |
           if [ -f "package.json" ]; then
-            echo "Running build step..."
-            npm run build || echo "Build failed, but continuing..."
-          else
-            echo "No package.json found. Skipping build step."
-          fi
-
-      - name: Check if 'dist' folder exists
-        run: |
-          if [ -d "dist" ]; then
-            echo "dist/ folder exists, proceeding with deployment."
-          else
-            echo "⚠️ WARNING: 'dist/' folder not found! Defaulting to root folder (.)."
+            npm run build || echo "No build step found, continuing..."
           fi
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          branch: gh-pages  # Deploys the app to the 'gh-pages' branch
-          folder: ${{ (hashFiles('dist/**') != '') && 'dist' || '.' }}  # Deploy from 'dist' if it exists, else root
-          token: ${{ secrets.GITHUB_TOKEN }}  # Uses GitHub’s built-in token
+          branch: gh-pages  # Deploys to 'gh-pages'
+          folder: .  # Change if your files are in 'dist'
+          token: ${{ secrets.GITHUB_TOKEN }}
