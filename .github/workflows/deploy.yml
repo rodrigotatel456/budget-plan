@@ -3,7 +3,7 @@ name: Deploy Budget Planner to GitHub Pages
 on:
   push:
     branches:
-      - main  # This runs the workflow every time you push to 'main' branch
+      - main  # Runs the workflow every time you push to 'main' branch
 
 permissions:
   contents: read
@@ -31,11 +31,25 @@ jobs:
         run: npm test || echo "Tests failed, but continuing deployment..."
 
       - name: Build Project (if needed)
-        run: npm run build || echo "Build failed, but continuing..."
+        run: |
+          if [ -f "package.json" ]; then
+            echo "Running build step..."
+            npm run build || echo "Build failed, but continuing..."
+          else
+            echo "No package.json found. Skipping build step."
+          fi
+
+      - name: Check if 'dist' folder exists
+        run: |
+          if [ -d "dist" ]; then
+            echo "dist/ folder exists, proceeding with deployment."
+          else
+            echo "⚠️ WARNING: 'dist/' folder not found! Defaulting to root folder (.)."
+          fi
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: gh-pages  # Deploys the app to the 'gh-pages' branch
-          folder: dist  # Change this if your output folder is different
+          folder: ${{ (hashFiles('dist/**') != '') && 'dist' || '.' }}  # Deploy from 'dist' if it exists, else root
           token: ${{ secrets.GITHUB_TOKEN }}  # Uses GitHub’s built-in token
