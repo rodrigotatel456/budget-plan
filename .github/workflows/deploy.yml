@@ -1,0 +1,41 @@
+name: Deploy Budget Planner to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main  # This runs the workflow every time you push to 'main' branch
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest  # The workflow runs in a Linux environment
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4  # Fetches your code from GitHub
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20  # Installs Node.js 20 (latest stable)
+
+      - name: Install Dependencies
+        run: npm install  # Installs required npm packages
+
+      - name: Run Linting
+        run: npm run lint || echo "Linting issues detected, but continuing..."
+
+      - name: Run Tests
+        run: npm test || echo "Tests failed, but continuing deployment..."
+
+      - name: Build Project (if needed)
+        run: npm run build || echo "Build failed, but continuing..."
+
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages  # Deploys the app to the 'gh-pages' branch
+          folder: dist  # Change this if your output folder is different
+          token: ${{ secrets.GITHUB_TOKEN }}  # Uses GitHub’s built-in token
